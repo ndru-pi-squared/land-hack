@@ -1,0 +1,25 @@
+{
+  "name": "land-hack",
+  "version": "1.0.0",
+  "description": "Usage of Property API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codeherk/land-hack.git"
+  },
+  "keywords": [
+    "real-estate"
+  ],
+  "author": "Byron Jenkins",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/codeherk/land-hack/issues"
+  },
+  "homepage": "https://github.com/codeherk/land-hack#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
