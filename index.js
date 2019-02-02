@@ -7,6 +7,7 @@ const readline = require('readline');
 var url = "https://phl.carto.com/api/v2/sql?q=SELECT owner_1, sale_date,sale_price,year_built FROM opa_properties_public";
 const limit = 10; // limits the data response. without an response, the query will take a long time to return data
 
+//https://phl.carto.com/api/v2/sql?q=SELECT owner_1, sale_date,sale_price,year_built FROM opa_properties_public WHERE owner_1 LIKE 'JENKINS%25' LIMIT 10
 var log = console.log;
 
 // create interface to get user input and display output
@@ -38,17 +39,24 @@ recursiveAsyncReadLine(); //we have to actually start our recursion somehow
 var getProperties = function (name) {
 
   // convert name to uppercase and add to query
-  var query = `${url} WHERE owner_1 LIKE '${name.toUpperCase()}%' LIMIT ${limit}`; // %25 is % .... SQL LIKE operator
-  log(query);
-  /*request(url, function (error, response, body) {
-    
-    log('error:', error); // Print the error if one occurred
+  var query = `${url} WHERE owner_1 LIKE '${name.toUpperCase()}%25' LIMIT 10`; // %25 is % .... SQL LIKE operator
+  //log(query); //debugging
+  
+
+  // make the call
+  request(query, function (error, response, body) {
+
+    if(error){
+      log('error:', error); // Print the error if one occurred
+      return
+    }
+
     log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-    //log('body:', body); // Print the HTML for the Google homepage.
 
     // parse json data
     var data = JSON.parse(body);
     log(data);
-  });*/
-  recursiveAsyncReadLine(); // Calling this function again to ask new question
+    recursiveAsyncReadLine(); // Calling this function again to ask new question
+  });
+  
 }
