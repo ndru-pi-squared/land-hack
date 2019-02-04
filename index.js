@@ -2,8 +2,8 @@
 const request = require('request');
 const readline = require('readline');
 
-var preparedURL = "https://phl.carto.com/api/v2/sql?q=";// start to build the URL of api
-var params = [];//array will store parameters to prep the URL with
+var preparedURL = "https://phl.carto.com/api/v2/sql?q="; // start to build the URL of api
+var params = []; //array will store parameters to prep the URL with
 const limit = 10; // limits the data response. without an response, the query will take a long time to return data
 
 var log = console.log;
@@ -19,26 +19,26 @@ var readLine = readline.createInterface({
 // get user input
 var recursiveAsyncReadLine = function () {
   readLine.question('Enter first name : ', (firstName) => {
-    if (firstName == 'exit'){
-        return readLine.close();}
+    if (firstName == 'exit') {
+      return readLine.close();
+    }
     if (firstName == '') {
       log("No name was entered.");
       return recursiveAsyncReadLine();
     }
-    if (firstName.indexOf(';') > -1){ //semicolon found, suspected malicious use, scrub/validate input in case api becomes insecure
+    if (firstName.indexOf(';') > -1) { //semicolon found, suspected malicious use, scrub/validate input in case api becomes insecure
       log("You have entered unfamilliar input. Please enter only characters and digits.");
       return recursiveAsyncReadLine();
     }
-    readLine.question('Enter last name : ', (lastName) => {
 
+    readLine.question('Enter last name : ', (lastName) => {
       if (lastName == 'exit')
         return readLine.close();
-
       if (lastName == '') {
         return recursiveAsyncReadLine();
         log("No name was entered.");
       }
-      if (lastName.indexOf(';') > -1){ //semicolon found, validate input
+      if (lastName.indexOf(';') > -1) { //semicolon found, validate input
         return recursiveAsyncReadLine();
         log("You have entered unfamilliar input. Please enter only characters and digits.");
       }
@@ -52,7 +52,7 @@ var recursiveAsyncReadLine = function () {
 }
 
 
-var pushParams = function (params) { 
+var pushParams = function (params) {
   //input: takes the parameters we want and populates an array with them
   //output: void
 
@@ -60,15 +60,14 @@ var pushParams = function (params) {
   params.push("sale_date");
   params.push("sale_price");
   params.push("year_built");
-  params.push("mailing_street");
+  params.push("location");
 }
 
 
-var prepareStatement = function (params){ 
+var prepareStatement = function (params) {
   //input: takes the query parameters array
   //output: returns the formatted SQL statement
-
-  pushParams(params);                     
+  pushParams(params);
   var statement = "SELECT " + params + " FROM opa_properties_public";
   //log("testing statement" + statement);
   return statement;
@@ -82,7 +81,7 @@ var getProperties = function (name) {
   //and supplies the mailing address it retrieves to a geocoding api in order to get the coordinates
 
   // convert name to uppercase and add to query
-  
+
   var query = `${preparedURL} WHERE owner_1 LIKE '${name}%25' LIMIT 10`; // %25 is % .... SQL LIKE operator
   //log("testing query: " + query); //debugging
 
@@ -94,35 +93,55 @@ var getProperties = function (name) {
       return
     }
 
-    log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-
+    //log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+    
     // parse json data
     var data = JSON.parse(body);
-    log(data);
-    var allAddressesToGeolocate = [];
-    log("\nGELOCATING IF DATA IS AVAILABLE");
-    for(var i = 0; i <= data.rows.length-1; i++){//runtime O(n) + whatever getMap is
-      allAddressesToGeolocate[i] = data.rows[i].mailing_street; 
-      //log("testing addresses to geolocate: " + allAddressesToGeolocate[i]);
-      if(allAddressesToGeolocate[i] != ""){//prevent null requests
-        
-        var c = allAddressesToGeolocate[i].charAt(0);//sample the first character 
-        //log("testing c: " + c);
-        if(c >=0 && c<=9){//if the first character is a number, the address is in the proper format (improper format is 'PO box xyz')
-          allAddressesToGeolocate[i] = allAddressesToGeolocate[i].replace(/\s*$/,"");//get rid of whitespaces at the end of the entry
-          allAddressesToGeolocate[i] = allAddressesToGeolocate[i] + " PHILADELPHIA PA"; //format address for geocoding
-          log(allAddressesToGeolocate[i]);
-          getMap(allAddressesToGeolocate[i]);//get the map for this particular entry
+    if (data.rows.length == 0) {
+      log('No results found');
+    } else {
+      logProperties(data.rows);
+      /*
+      var allAddressesToGeolocate = [];
+      log("\nGELOCATING IF DATA IS AVAILABLE");
+      for (var i = 0; i <= data.rows.length - 1; i++) { //runtime O(n) + whatever getMap is
+        allAddressesToGeolocate[i] = data.rows[i].mailing_street;
+        //log("testing addresses to geolocate: " + allAddressesToGeolocate[i]);
+        if (allAddressesToGeolocate[i] != "") { //prevent null requests  
+          var c = allAddressesToGeolocate[i].charAt(0); //sample the first character 
+          //log("testing c: " + c);
+          if (c >= 0 && c <= 9) { //if the first character is a number, the address is in the proper format (improper format is 'PO box xyz')
+            allAddressesToGeolocate[i] = allAddressesToGeolocate[i].replace(/\s*$/, ""); //get rid of whitespaces at the end of the entry
+            allAddressesToGeolocate[i] = allAddressesToGeolocate[i] + " PHILADELPHIA PA"; //format address for geocoding
+            log(allAddressesToGeolocate[i]);
+            getMap(allAddressesToGeolocate[i]); //get the map for this particular entry
+          }
+
         }
-        
-      }
-    } 
+      }*/
+    }
     recursiveAsyncReadLine(); // Calling this function again to ask new question
   });
 }
 
+var logProperties = function (land) {
+  //log(land);
+  log('\n');
+  log('------------------------------------------------');
+  for(var i = 0; i < land.length; i++){
+    // log(land[i]);
+    log("Owner: \t" + land[i].owner_1);
+    log("Location: \t" + land[i].location); 
+    log("  built: \t" +land[i].year_built);   
+    log("  sale price: \t" + land[i].sale_price);
+    log("  sale date: \t" + land[i].sale_date + "\n");
+  }
+  log('------------------------------------------------');
+  
+}
 
-var formatGeocodingAddress = function(addressToFormat){
+
+var formatGeocodingAddress = function (addressToFormat) {
   //input: a string address with spaces
   //output: the same address, spaces replaced with '+'
   //helps format the URL for the geocoding api
@@ -138,9 +157,9 @@ var getMap = function (mailingAddress) {
   //output: returns the coordinates the the address supplied 
   //as long as the mailing address field in the property data is available
 
-  if(mailingAddress != ""){//if the attribute exists in the db for this entry
+  if (mailingAddress != "") { //if the attribute exists in the db for this entry
     //log("testing mailingAddress: " + mailingAddress);
-    geocodeURL = "https://api.geocod.io/v1.3/geocode?q=" + formatGeocodingAddress(mailingAddress) + "&api_key=" + process.argv[2];//126a657ce501575c55c35ee2c1156c5c00ae607"; //argv[1] if we want to use environment vars
+    geocodeURL = "https://api.geocod.io/v1.3/geocode?q=" + formatGeocodingAddress(mailingAddress) + "&api_key=" + process.argv[2]; //126a657ce501575c55c35ee2c1156c5c00ae607"; //argv[1] if we want to use environment vars
     //log("testing geocodeURL: " + geocodeURL);
     request(geocodeURL, function (error, response, body) {
 
@@ -149,8 +168,8 @@ var getMap = function (mailingAddress) {
         return
       }
 
-      log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-
+      //log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+      log('\n');
       // parse json data
       var data = JSON.parse(body);
       console.log("\ndata: %j", data);
@@ -163,5 +182,8 @@ var getMap = function (mailingAddress) {
 //*************************************************************************
 //prepare the URL and start to retrieve user input
 preparedURL = preparedURL.concat(prepareStatement(params));
-recursiveAsyncReadLine(); 
+recursiveAsyncReadLine();
 //*************************************************************************
+
+
+
